@@ -1,5 +1,7 @@
 tcp connect
 
+supported features
+
 disadvantages of tcp syn
 
 Instructions, example runs.
@@ -25,3 +27,5 @@ reverse engineering
 - nmap reverses and pivots
 
 ease of multi-threading
+
+
