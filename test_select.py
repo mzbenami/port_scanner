@@ -9,7 +9,7 @@ import copy
 
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      ENOTCONN, ESHUTDOWN, EINTR, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
-     errorcode
+     ETIMEDOUT, ECONNREFUSED, errorcode
 
 FIRST_CLASS_PORTS = {80, 443}
 SECOND_CLASS_PORTS = {139, 53, 23, 111, 995,
@@ -101,6 +101,7 @@ class PortProbe(object):
 
         self.file_no = self.socket.fileno()
         self.port = port
+        self.result = RESULT_UNKNOWN
 
     def connect(self, sock, address):
         #adapted from asyncore.py
@@ -117,15 +118,27 @@ class PortProbe(object):
         self.socket.close()
 
     def analyze(self):
+        if self.result is not RESULT_UNKNOWN:
+            return self.result
+
         err = self.socket.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
-
         if err == 0:
-            return RESULT_OPEN
-        if err == 61:
-            return RESULT_CLOSED
+            try:
+                self.socket.getpeername()
+            except socket.error as se:
+                if se.errno in [ENOTCONN, EINVAL]:
+                    return RESULT_UNKNOWN
+                raise se
 
-    def mark_filtered(self):
-        self.result = RESULT_FILTERED
+            self.result = RESULT_OPEN
+
+        elif err == ETIMEDOUT:
+            self.result = RESULT_FILTERED
+
+        elif err == ECONNREFUSED:
+            self.result = RESULT_CLOSED
+
+        return self.result
 
 
 class PortScanner(object):
@@ -163,7 +176,6 @@ class PortScanner(object):
 
                 probe.close()
                 w.remove(reaped)
-                reaped_count += 1
 
         for unreaped in w:
             probe = fd_map[unreaped]
@@ -192,10 +204,10 @@ class PortScanner(object):
 
 
 port_list = range(1, 65535)
-IP_ADDR = '192.30.252.131'
+IP_ADDR = '172.16.9.133'
 
-ps = PortScanner(IP_ADDR, port_list)
-ps.run()
+#ps = PortScanner(IP_ADDR, port_list)
+#ps.run()
 
 
 
