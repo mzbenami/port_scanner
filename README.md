@@ -35,7 +35,7 @@ This will install the needed library, and make the console script ``portscanner.
 ## Example Runs
 
 ```
-$ port-scanner www.google.com -p 80,443
+$ portscanner www.google.com -p 80,443
 Staring port scan of host www.google.com.
 
 RESULTS
@@ -85,7 +85,7 @@ PORT        STATUS
 
 ## How it works
 
-The scanner is loosely reverse engineered from the popular ``nmap`` scanner's "tcp connect" option (default). Even though "tcp syn" is more efficient, it wasn't chosen because 1) Raw socket programming is more cumbersome, 2) The user would need superuser privileges, 3) Scans are generally slowest when the remote host has a large proportion of ports that don't respond at all, in which case "tcp syn" and "tcp connect" send the same of traffic (a single SYN packet).
+The scanner is loosely reverse engineered from the popular ``nmap`` scanner's "tcp connect" option (default). Even though "tcp syn" is more efficient, it wasn't chosen because 1) Raw socket programming is more cumbersome, 2) The user would need superuser privileges, 3) Scans are generally slowest when the remote host has a large proportion of ports that don't respond at all, in which case "tcp syn" and "tcp connect" send the same amount of traffic (a single SYN packet).
 
 The author (me) quickly saw that using single-threaded synchronous sockets were not an efficient option. Even for remote hosts that send "connection refused" for non-open ports, scans could take hours. Asynchronous sockets and/or multi-threading was needed. The current implementation uses single-threaded asynchronous sockets, but is designed for easy extensibility to multiple threads in the future. The ``select`` system call is used to attempt to "reap" information from groups of concurrently connecting "chunks" of ports.
 
@@ -102,7 +102,9 @@ In the beginning, I thought I could concurrently open all (worst case 65535) des
 A Makefile is provided for testing. Enjoy these targets:
 
 ``unittest``: Run unit tests on the library.
+
 ``coverage_report``: See a coverage report on teh command line.
+
 ``coverage_html``: Generate an HTML coverage report in ``coverage_html_report/``.
 
 Current coverage is at 98%.
