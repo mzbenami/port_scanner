@@ -5,7 +5,7 @@ setup(name='port_scanner',
       packages=find_packages(),
       entry_points={
         'console_scripts': [
-            'port-scanner=portscanner:main'
+            'portscanner=portscanner:main'
         ]
       },
 )
