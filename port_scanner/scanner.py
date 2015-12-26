@@ -6,10 +6,14 @@ from port_scanner.values import RESULT_FILTERED
 from port_scanner.probe import PortProbe
 from port_scanner.chunker import PortChunker
 
+INTERVAL_TIME = 0.11
 
 class InvalidHostError(Exception):
     def __init__(self, host):
         self.message = '%s is an invalid host or IP address' % host
+
+def reverse_port_chunk(port_chunk):
+    return port_chunk[::-1]
 
 
 class PortScanner(object):
@@ -61,18 +65,20 @@ class PortScanner(object):
         if timeout > 0:
             time.sleep(timeout)
 
-    def reverse_port_chunk(self, port_chunk):
-        return port_chunk[::-1]
 
-    def run(self, interval_time=0.11):
-        self.results_map.clear()
+    def run(self, interval_time=INTERVAL_TIME):
+        self.clear()
+
         port_chunker = PortChunker(self.port_list)
-
         port_chunk = port_chunker.get_chunk()
         while port_chunk:
             self.poll(port_chunk, interval_time)
-
-            reversed_chunk = self.reverse_port_chunk(port_chunk)
+            reversed_chunk = reverse_port_chunk(port_chunk)
             self.poll(reversed_chunk, interval_time)
 
             port_chunk = port_chunker.get_chunk()
+
+        return self.results_map
+
+    def clear(self):
+        self.results_map.clear()

@@ -38,12 +38,7 @@ class ProbeTestCase(unittest.TestCase):
         self.port = 80
         self.port_probe = PortProbe(self.ip_addr, self.port)
 
-    def test_init(self):
-        self.mock_socket.setsockopt.assert_called_with(socket.SOL_SOCKET, socket.SO_LINGER,
-                                            struct.pack('ii', 1, 0))
-        self.mock_socket.fileno.assert_called_with()
-
-        self.assertEqual(self.port_probe.port, self.port)
+    def test_init_result_value_unknown(self):
         self.assertEqual(self.port_probe.result, RESULT_UNKNOWN)
 
     def test_close(self):
@@ -90,6 +85,7 @@ class ProbeTestCase(unittest.TestCase):
 
         result = self.port_probe.analyze()
         self.assertEqual(result, RESULT_OPEN)
+
         self.mock_socket.getsockopt.assert_called_once_with(socket.SOL_SOCKET, socket.SO_ERROR)
 
 

@@ -23,16 +23,18 @@ def create_tcp_socket():
     return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
+def setup_tcp_socket(sock):
+    sock.setblocking(0)
+    # send RST on close() instead of FIN handshake
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+                           struct.pack('ii', 1, 0))
+
+
 class PortProbe(object):
 
     def __init__(self, ip_addr, port):
         self.socket = create_tcp_socket()
-        self.socket.setblocking(0)
-
-        # send RST on close() instead of FIN handshake
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-                               struct.pack('ii', 1, 0))
-
+        setup_tcp_socket(self.socket)
         connect(self.socket, (ip_addr, port))
 
         self.file_no = self.socket.fileno()
@@ -59,7 +61,6 @@ class PortProbe(object):
                     raise se
             else:
                 self.result = RESULT_OPEN
-
 
 
         elif err == ETIMEDOUT:
