@@ -9,30 +9,35 @@ from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, EINVAL, \
 from port_scanner.values import RESULT_CLOSED, RESULT_FILTERED, RESULT_OPEN, RESULT_UNKNOWN
 
 
+def connect(sock, address):
+    # adapted from asyncore.py
+    err = sock.connect_ex(address)
+    if err in (0, EISCONN, EINPROGRESS, EALREADY, EWOULDBLOCK) \
+            or err == EINVAL and os.name in ('nt', 'ce'):
+        return
+    else:
+        raise socket.error(err, errorcode[err])
+
+
+def create_tcp_socket():
+    return socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
 class PortProbe(object):
 
     def __init__(self, ip_addr, port):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket = create_tcp_socket()
         self.socket.setblocking(0)
+
+        # send RST on close() instead of FIN handshake
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
                                struct.pack('ii', 1, 0))
 
-        self.connect(self.socket, (ip_addr, port))
+        connect(self.socket, (ip_addr, port))
 
         self.file_no = self.socket.fileno()
         self.port = port
         self.result = RESULT_UNKNOWN
-
-    def connect(self, sock, address):
-        # adapted from asyncore.py
-        err = sock.connect_ex(address)
-        if err in (EINPROGRESS, EALREADY, EWOULDBLOCK) \
-                or err == EINVAL and os.name in ('nt', 'ce'):
-            return
-        if err in (0, EISCONN):
-            pass
-        else:
-            raise socket.error(err, errorcode[err])
 
     def close(self):
         self.socket.close()
@@ -46,11 +51,16 @@ class PortProbe(object):
             try:
                 self.socket.getpeername()
             except socket.error as se:
-                if se.errno in [ENOTCONN, EINVAL]:
-                    return RESULT_UNKNOWN
-                raise se
+                if se.errno == ENOTCONN:
+                    self.result = RESULT_UNKNOWN
+                elif se.errno == EINVAL:
+                    self.result = RESULT_OPEN
+                else:
+                    raise se
+            else:
+                self.result = RESULT_OPEN
 
-            self.result = RESULT_OPEN
+
 
         elif err == ETIMEDOUT:
             self.result = RESULT_FILTERED

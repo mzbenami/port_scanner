@@ -1,15 +1,17 @@
 import unittest
 import random
+import copy
 
 from port_scanner.chunker import *
 
 VALID_LIST = range(LOWEST_PORT_NUMBER, HIGHEST_PORT_NUMBER + 1)
 
+
 def random_sample(population, divisor=2):
-    return random.sample(population, len(population) / 2)
+    return random.sample(population, len(population) / divisor)
 
 
-class ChunkerTest(unittest.TestCase):
+class ChunkerTestCase(unittest.TestCase):
 
     def test_port_intersection(self):
         intersect_list = [
@@ -44,13 +46,12 @@ class ChunkerTest(unittest.TestCase):
 
         self.assertEqual(set(valid_sample), result)
 
-
     def test_remove_ports_from_pool(self):
         pool = set(random_sample(VALID_LIST))
         to_remove = random_sample(pool)
 
-        self.assertGreaterEqual(len(pool.intersection(to_remove)), 1)
         remove_ports_from_pool(to_remove, pool)
+
         self.assertEqual(pool.intersection(to_remove), set([]))
 
     def test_remove_ports_with_error(self):
@@ -60,8 +61,37 @@ class ChunkerTest(unittest.TestCase):
         with self.assertRaises(RemovalError):
             remove_ports_from_pool(to_remove, pool)
 
+    def test_draw_from_pool(self):
+        port_pool_original = set(random_sample(VALID_LIST))
+        port_pool_copy = copy.copy(port_pool_original)
 
+        drawing_size = len(port_pool_copy) / 2
+        drawing = set(draw_from_pool(port_pool_copy, drawing_size))
 
+        # everything in the drawing was in the original pool
+        self.assertEqual(drawing.intersection(port_pool_original), drawing)
+
+        # the pool that we drew from no longer has any element in the drawing
+        self.assertEqual(drawing.intersection(port_pool_copy), set([]))
+
+    def test_draw_size_larger_than_pool(self):
+        port_pool_original = set(random_sample(VALID_LIST))
+        port_pool_copy = copy.copy(port_pool_original)
+
+        drawing_size = len(port_pool_copy) * 2
+        drawing = set(draw_from_pool(port_pool_copy, drawing_size))
+
+        # the drawing is all of the original pool
+        self.assertEqual(port_pool_original, drawing)
+
+        # the pool that we drew from is now empty
+        self.assertEqual(port_pool_copy, set([]))
+
+    def test_draw_from_empty_pool(self):
+        port_pool = set([])
+        drawing = draw_from_pool(port_pool, 3)
+
+        self.assertEqual(drawing, [])
 
     def test_init_chunker(self):
         valid_set = set(VALID_LIST)
@@ -85,6 +115,68 @@ class ChunkerTest(unittest.TestCase):
         self.assertEqual(chunker.main_pool.intersection(fc_sample), set([]))
         self.assertEqual(chunker.main_pool.intersection(sc_sample), set([]))
 
+    def test_get_chunk(self):
+        sample_list = random_sample(VALID_LIST)
+        sample_set = set(sample_list)
+        chunker = PortChunker(sample_list)
+
+        lower_bound = CHUNK_SIZE_LOWER_LIMIT
+        upper_bound = CHUNK_SIZE_UPPER_LIMIT
+        chunk = chunker.get_chunk(lower_bound, upper_bound)
+        while chunk:
+            size = len(chunk)
+            self.assertLessEqual(size, upper_bound)
+
+            chunk_set = set(chunk)
+            # all elements in the chunk came from the sample set
+            self.assertEqual(chunk_set.intersection(sample_set), chunk_set)
+
+            chunk = chunker.get_chunk(lower_bound, upper_bound)
+
+    def test_get_chunk_with_all_first_class_elements(self):
+        port_list = []
+        first_class_list = FIRST_CLASS_PORTS
+        first_class_set = set(first_class_list)
+        general_list = random_sample(VALID_LIST)
+
+        port_list.extend(first_class_list)
+        port_list.extend(general_list)
+
+        chunker = PortChunker(port_list)
+        chunk = chunker.get_chunk()
+        chunk_set = set(chunk)
+
+        self.assertEqual(chunk_set.intersection(first_class_set), chunk_set)
+
+    def test_get_chunk_with_single_first_class_element(self):
+        valid_set = set(VALID_LIST)
+        valid_set -= FIRST_CLASS_PORTS
+        valid_set -= SECOND_CLASS_PORTS
+
+        port_list = []
+        first_class_list = random.sample(FIRST_CLASS_PORTS, 1)
+        general_list = random_sample(valid_set)
+
+        port_list.extend(first_class_list)
+        port_list.extend(general_list)
+
+        chunker = PortChunker(port_list)
+        chunk = chunker.get_chunk()
+
+        self.assertEqual(len(chunk), 1)
+        self.assertEqual(chunk, first_class_list)
+
+    def test_get_chunk_invalid_bounds(self):
+
+        def test_with_bounds(port_list, lower, upper):
+            chunker = PortChunker(port_list)
+
+            with self.assertRaises(ChunkBoundsError):
+                chunker.get_chunk(lower, upper)
+
+        port_list = random_sample(VALID_LIST)
+        test_with_bounds(port_list, -1, 5)
+        test_with_bounds(port_list, 6, 3)
 
 
 if __name__ == "__main__":

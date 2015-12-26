@@ -12,9 +12,23 @@ SECOND_CLASS_PORTS = {139, 53, 23, 111, 995,
                       445, 587, 25, 199, 113,
                       21, 256, 554}
 
+
 class RemovalError(Exception):
     def __init__(self, port):
-        self.message = '%d not in port pool. It may have already been removed.'
+        self.message = '%d not in port pool. It may have already been removed.' % port
+
+
+class ChunkBoundsError(Exception):
+    def __init__(self, lower, upper):
+        self.message = 'Bounds must be such that 0 <= lower_bound <= upper_bound\n'
+        self.message += 'Received lower bound: %d, upper bound: %d' % (lower, upper)
+
+
+def bounds_are_valid(lower, upper):
+    if lower >= 0 and lower <= upper:
+        return True
+
+    return False
 
 
 def port_set_intersection(port_set_1, port_set_2):
@@ -22,6 +36,9 @@ def port_set_intersection(port_set_1, port_set_2):
 
 
 def random_chunk_size(lower_bound, upper_bound):
+    if not bounds_are_valid(lower_bound, upper_bound):
+        raise ChunkBoundsError(lower_bound, upper_bound)
+
     return random.randint(lower_bound, upper_bound)
 
 
@@ -47,10 +64,12 @@ def remove_ports_from_pool(ports_to_remove, port_pool):
 
 
 def draw_from_pool(port_pool, size):
+    if size < 0:
+        size = 0
+
     size = min(size, len(port_pool))
     drawing = random.sample(port_pool, size)
     remove_ports_from_pool(drawing, port_pool)
-
     return drawing
 
 
@@ -75,13 +94,19 @@ class PortChunker(object):
                   lower_bound=CHUNK_SIZE_LOWER_LIMIT,
                   upper_bound=CHUNK_SIZE_UPPER_LIMIT):
 
+        if not bounds_are_valid(lower_bound, upper_bound):
+            raise ChunkBoundsError(lower_bound, upper_bound)
+
         if not port_pool_is_empty(self.first_class_pool):
+            # drawing size from first class pool should be small (at most lower_bound)
             drawing = draw_from_pool(self.first_class_pool, lower_bound)
             return drawing
 
         if not port_pool_is_empty(self.second_class_pool):
+            # drawing size from second class pool should make up at most half of the returned chunk
             drawing = draw_from_pool(self.second_class_pool, lower_bound / 2 + 1)
             remaining_size = lower_bound - len(drawing)
+
             if remaining_size > 0:
                 drawing += draw_from_pool(self.main_pool, remaining_size)
                 random.shuffle(drawing)
