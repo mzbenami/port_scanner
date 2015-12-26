@@ -1,0 +1,20 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+omit = *builtins*
+       *funcsigs*
+       *future*
+       *mock*
+       *test*
+       *pbr*
+       *pkg_resources*
+       *six*
+
+[report]
+exclude_lines =
+    pragma: no cover
+
+ignore_errors = True
+
+[html]
+directory = coverage_html_report

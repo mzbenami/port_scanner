@@ -3,6 +3,8 @@ import mock
 
 from port_scanner.probe import *
 
+from errno import ENOMEM, ENOBUFS
+
 
 class ProbeConnectTestCase(unittest.TestCase):
 
@@ -65,6 +67,13 @@ class ProbeTestCase(unittest.TestCase):
         result = self.port_probe.analyze()
         self.assertEqual(result, RESULT_OPEN)
 
+    def test_analyze_unknown_peer_error(self):
+        self.mock_socket.getsockopt.return_value = 0
+        self.mock_socket.getpeername.side_effect = socket.error(ENOBUFS, 'Insufficient resources.')
+
+        with self.assertRaises(socket.error):
+            self.port_probe.analyze()
+
     def test_analyze_filtered(self):
         self.mock_socket.getsockopt.return_value = ETIMEDOUT
         result = self.port_probe.analyze()
@@ -74,6 +83,11 @@ class ProbeTestCase(unittest.TestCase):
         self.mock_socket.getsockopt.return_value = ECONNREFUSED
         result = self.port_probe.analyze()
         self.assertEqual(result, RESULT_CLOSED)
+
+    def test_analyze_unknown(self):
+        self.mock_socket.getsockopt.return_value = ENOMEM
+        result = self.port_probe.analyze()
+        self.assertEqual(result, RESULT_UNKNOWN)
 
     def test_analyze_known_idempotency(self):
         self.mock_socket.getsockopt.return_value = 0

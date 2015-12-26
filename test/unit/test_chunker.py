@@ -93,6 +93,12 @@ class ChunkerTestCase(unittest.TestCase):
 
         self.assertEqual(drawing, [])
 
+    def test_draw_negative_size(self):
+        port_pool = {1, 2}
+        drawing = draw_from_pool(port_pool, -100)
+
+        self.assertEqual(drawing, [])
+
     def test_init_chunker(self):
         valid_set = set(VALID_LIST)
         valid_set -= FIRST_CLASS_PORTS
@@ -178,6 +184,21 @@ class ChunkerTestCase(unittest.TestCase):
         test_with_bounds(port_list, -1, 5)
         test_with_bounds(port_list, 6, 3)
 
+    def test_random_chunk_size(self):
+        lower = 3
+        upper = 6
+
+        size = random_chunk_size(lower, upper)
+        self.assertLessEqual(size, upper)
+        self.assertGreaterEqual(size, lower)
+
+
+    def test_random_chunk_invalid_bound(self):
+        lower = 6
+        upper = 3
+
+        with self.assertRaises(ChunkBoundsError):
+            random_chunk_size(lower, upper)
 
 if __name__ == "__main__":
     unittest.main()
