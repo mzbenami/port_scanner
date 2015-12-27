@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>port_scanner.chunker &mdash; port_scanner  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="port_scanner  documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../../index.html" class="icon icon-home"> port_scanner
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../port_scanner.html">port_scanner package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../port_scanner.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.chunker.html">port_scanner.chunker module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.probe.html">port_scanner.probe module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.scanner.html">port_scanner.scanner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.values.html">port_scanner.values module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../port_scanner.html#module-port_scanner">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">port_scanner</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>port_scanner.chunker</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for port_scanner.chunker</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;This module provides functions and a class ``PortChunker`` for feeding chunks of ports</span>
+<span class="sd">to a port scanner.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="n">CHUNK_SIZE_LOWER_LIMIT</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">CHUNK_SIZE_UPPER_LIMIT</span> <span class="o">=</span> <span class="mi">20</span>
+
+<span class="n">LOWEST_PORT_NUMBER</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">HIGHEST_PORT_NUMBER</span> <span class="o">=</span> <span class="mi">65335</span>
+
+<span class="n">FIRST_CLASS_PORTS</span> <span class="o">=</span> <span class="p">{</span><span class="mi">80</span><span class="p">,</span> <span class="mi">443</span><span class="p">}</span>
+<span class="n">SECOND_CLASS_PORTS</span> <span class="o">=</span> <span class="p">{</span><span class="mi">139</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">111</span><span class="p">,</span> <span class="mi">995</span><span class="p">,</span>
+                      <span class="mi">22</span><span class="p">,</span> <span class="mi">993</span><span class="p">,</span> <span class="mi">143</span><span class="p">,</span> <span class="mi">135</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span>
+                      <span class="mi">445</span><span class="p">,</span> <span class="mi">587</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">199</span><span class="p">,</span> <span class="mi">113</span><span class="p">,</span>
+                      <span class="mi">21</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">554</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="RemovalError"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.RemovalError">[docs]</a><span class="k">class</span> <span class="nc">RemovalError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%d</span><span class="s"> not in port pool. It may have already been removed.&#39;</span> <span class="o">%</span> <span class="n">port</span>
+
+</div>
+<div class="viewcode-block" id="ChunkBoundsError"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.ChunkBoundsError">[docs]</a><span class="k">class</span> <span class="nc">ChunkBoundsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Bounds must be such that 0 &lt;= lower_bound &lt;= upper_bound</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">+=</span> <span class="s">&#39;Received lower bound: </span><span class="si">%d</span><span class="s">, upper bound: </span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="bounds_are_valid"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.bounds_are_valid">[docs]</a><span class="k">def</span> <span class="nf">bounds_are_valid</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">lower</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">lower</span> <span class="o">&lt;=</span> <span class="n">upper</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="bp">False</span>
+
+</div>
+<div class="viewcode-block" id="port_set_intersection"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.port_set_intersection">[docs]</a><span class="k">def</span> <span class="nf">port_set_intersection</span><span class="p">(</span><span class="n">port_set_1</span><span class="p">,</span> <span class="n">port_set_2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the intersection of two sets of ports(integers).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">port_set_1</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">port_set_2</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="random_chunk_size"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.random_chunk_size">[docs]</a><span class="k">def</span> <span class="nf">random_chunk_size</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a random integer between lower_bound and upper_bound.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ChunkBoundsError: if bounds are invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">bounds_are_valid</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ChunkBoundsError</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="port_is_valid"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.port_is_valid">[docs]</a><span class="k">def</span> <span class="nf">port_is_valid</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">port</span> <span class="o">&gt;=</span> <span class="n">LOWEST_PORT_NUMBER</span> <span class="ow">and</span> <span class="n">port</span> <span class="o">&lt;=</span> <span class="n">HIGHEST_PORT_NUMBER</span>
+
+</div>
+<div class="viewcode-block" id="validate_port_list"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.validate_port_list">[docs]</a><span class="k">def</span> <span class="nf">validate_port_list</span><span class="p">(</span><span class="n">port_list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Filter out invalid (out of bounds) ports from list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">port_pool</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">port_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">port_is_valid</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+            <span class="n">port_pool</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">port_pool</span>
+
+</div>
+<div class="viewcode-block" id="remove_ports_from_pool"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.remove_ports_from_pool">[docs]</a><span class="k">def</span> <span class="nf">remove_ports_from_pool</span><span class="p">(</span><span class="n">ports_to_remove</span><span class="p">,</span> <span class="n">port_pool</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Remove ports from a pool(set) of ports.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ports_to_remove(collection): iterable collection of ports to remove.</span>
+<span class="sd">        port_pool(set): pool to remove from.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RemovalError: if a port isn&#39;t in the pool to begin with.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">ports_to_remove</span><span class="p">:</span>
+            <span class="n">port_pool</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">RemovalError</span><span class="p">(</span><span class="n">port</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="draw_from_pool"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.draw_from_pool">[docs]</a><span class="k">def</span> <span class="nf">draw_from_pool</span><span class="p">(</span><span class="n">port_pool</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a random sample of ports from a pool,</span>
+<span class="sd">    and remove those ports from the pool.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        port_pool(set): The pool of ports to draw from.</span>
+<span class="sd">        size(int): The desired size of the drawing.</span>
+<span class="sd">            If size is bigger than the pool, the pool will be completely drained.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Random sample of ports from the pool.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">port_pool</span><span class="p">))</span>
+    <span class="n">drawing</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">port_pool</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">remove_ports_from_pool</span><span class="p">(</span><span class="n">drawing</span><span class="p">,</span> <span class="n">port_pool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">drawing</span>
+
+</div>
+<div class="viewcode-block" id="port_pool_is_empty"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.port_pool_is_empty">[docs]</a><span class="k">def</span> <span class="nf">port_pool_is_empty</span><span class="p">(</span><span class="n">port_pool</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check whether a port pool is empty.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">port_pool</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+</div>
+<div class="viewcode-block" id="PortChunker"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.PortChunker">[docs]</a><span class="k">class</span> <span class="nc">PortChunker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This object is initialized with a collection of ports(integers)</span>
+<span class="sd">    that it splits up into     distinct non-overlapping pools(sets).</span>
+<span class="sd">    The member method ``get_chunk()`` draws from the pools according to preferences.</span>
+<span class="sd">    Designed to be called by ``port_scanner.scanner.PortScanner``</span>
+<span class="sd">    to scan chunks of ports at a time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        port_list(collection): Collection of ports to form the basis of the pools.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        fist_class_pool: A pool of very popular ports</span>
+<span class="sd">            that a scanner would want to check first.</span>
+<span class="sd">        second_class_pool: A pool of popular ports</span>
+<span class="sd">            that a scanner would want to check early in the process.</span>
+<span class="sd">        main_pool: A pool of ports that aren&#39;t first class or second class.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port_list</span><span class="p">):</span>
+        <span class="n">port_pool</span> <span class="o">=</span> <span class="n">validate_port_list</span><span class="p">(</span><span class="n">port_list</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">first_class_pool</span> <span class="o">=</span> <span class="n">port_set_intersection</span><span class="p">(</span><span class="n">port_pool</span><span class="p">,</span> <span class="n">FIRST_CLASS_PORTS</span><span class="p">)</span>
+        <span class="n">port_pool</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">first_class_pool</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">second_class_pool</span> <span class="o">=</span> <span class="n">port_set_intersection</span><span class="p">(</span><span class="n">port_pool</span><span class="p">,</span> <span class="n">SECOND_CLASS_PORTS</span><span class="p">)</span>
+        <span class="n">port_pool</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">second_class_pool</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_pool</span> <span class="o">=</span> <span class="n">port_pool</span>
+
+<div class="viewcode-block" id="PortChunker.get_chunk"><a class="viewcode-back" href="../../port_scanner.chunker.html#port_scanner.chunker.PortChunker.get_chunk">[docs]</a>    <span class="k">def</span> <span class="nf">get_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                  <span class="n">lower_bound</span><span class="o">=</span><span class="n">CHUNK_SIZE_LOWER_LIMIT</span><span class="p">,</span>
+                  <span class="n">upper_bound</span><span class="o">=</span><span class="n">CHUNK_SIZE_UPPER_LIMIT</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a randomized chunk(list) of ports from the various instance pools.</span>
+<span class="sd">        Ensure ports in chunk are no longer in the pool drawn from.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lower_bound: The suggested lower bound on the size of a chunk from the main pool.</span>
+<span class="sd">                Also the suggested upper bound on a chunk drawing from a first or second-class pool.</span>
+<span class="sd">            upper_bound: The hard upper bound on the size of any chunk returned.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">             A randomized chunk(list) of ports from the various instance pools.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">bounds_are_valid</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ChunkBoundsError</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
+
+        <span class="c"># first class ports get chunks all to themselves</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">port_pool_is_empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">first_class_pool</span><span class="p">):</span>
+            <span class="c"># drawing size from first class pool should be small (at most lower_bound)</span>
+            <span class="n">drawing</span> <span class="o">=</span> <span class="n">draw_from_pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">first_class_pool</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">drawing</span>
+
+        <span class="c"># second class ports get priority, but can be mixed in with ports from the main pool</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">port_pool_is_empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">second_class_pool</span><span class="p">):</span>
+            <span class="c"># drawing size from second class pool should make up at most half of the returned chunk</span>
+            <span class="n">drawing</span> <span class="o">=</span> <span class="n">draw_from_pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">second_class_pool</span><span class="p">,</span> <span class="n">lower_bound</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">remaining_size</span> <span class="o">=</span> <span class="n">lower_bound</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">drawing</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">remaining_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">drawing</span> <span class="o">+=</span> <span class="n">draw_from_pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_pool</span><span class="p">,</span> <span class="n">remaining_size</span><span class="p">)</span>
+                <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">drawing</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">drawing</span>
+
+        <span class="c"># only get here when first and second class ports are exhausted</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">port_pool_is_empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_pool</span><span class="p">):</span>
+            <span class="n">desired_chunk_size</span> <span class="o">=</span> <span class="n">random_chunk_size</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
+            <span class="n">drawing</span> <span class="o">=</span> <span class="n">draw_from_pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_pool</span><span class="p">,</span> <span class="n">desired_chunk_size</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">drawing</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Author.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

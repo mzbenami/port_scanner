@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>port_scanner.probe module &mdash; port_scanner  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="port_scanner  documentation" href="index.html"/>
+        <link rel="up" title="port_scanner package" href="port_scanner.html"/>
+        <link rel="next" title="port_scanner.scanner module" href="port_scanner.scanner.html"/>
+        <link rel="prev" title="port_scanner.chunker module" href="port_scanner.chunker.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> port_scanner
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="port_scanner.html">port_scanner package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="port_scanner.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="port_scanner.chunker.html">port_scanner.chunker module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">port_scanner.probe module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="port_scanner.scanner.html">port_scanner.scanner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="port_scanner.values.html">port_scanner.values module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="port_scanner.html#module-port_scanner">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">port_scanner</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="port_scanner.html">port_scanner package</a> &raquo;</li>
+      
+    <li>port_scanner.probe module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="module-port_scanner.probe">
+<span id="port-scanner-probe-module"></span><h1>port_scanner.probe module<a class="headerlink" href="#module-port_scanner.probe" title="Permalink to this headline">¶</a></h1>
+<p>This module provides functions and a class <tt class="docutils literal"><span class="pre">PortProbe</span></tt> to connect
+over a single TCP socket on a specified port, and determine the status of the
+port on the host on the otherside.</p>
+<dl class="class">
+<dt id="port_scanner.probe.PortProbe">
+<em class="property">class </em><tt class="descclassname">port_scanner.probe.</tt><tt class="descname">PortProbe</tt><big>(</big><em>ip_addr</em>, <em>port</em><big>)</big><a class="reference internal" href="_modules/port_scanner/probe.html#PortProbe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.probe.PortProbe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>This class connects over a socket on initialization,
+and provides an <tt class="docutils literal"><span class="pre">analyze()</span></tt> method to determine the status of
+the port on the other side.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ip_addr</strong> (<em>str</em>) &#8211; IP address of host to connect to. If a hostname is given
+instead of an IP address, behavior is undefined.</li>
+<li><strong>port</strong> (<em>int</em>) &#8211; Port to connect to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="port_scanner.probe.PortProbe.file_no">
+<tt class="descname">file_no</tt><a class="headerlink" href="#port_scanner.probe.PortProbe.file_no" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> &#8211; The file descriptor of the associated socket.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="port_scanner.probe.PortProbe.port">
+<tt class="descname">port</tt><a class="headerlink" href="#port_scanner.probe.PortProbe.port" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> &#8211; The remote port of the associated socket.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="port_scanner.probe.PortProbe.analyze">
+<tt class="descname">analyze</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/port_scanner/probe.html#PortProbe.analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.probe.PortProbe.analyze" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="port_scanner.probe.PortProbe.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/port_scanner/probe.html#PortProbe.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.probe.PortProbe.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="port_scanner.probe.connect">
+<tt class="descclassname">port_scanner.probe.</tt><tt class="descname">connect</tt><big>(</big><em>sock</em>, <em>address</em><big>)</big><a class="reference internal" href="_modules/port_scanner/probe.html#connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.probe.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asynchronously connect over a provided TCP socket.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sock</strong> (<em>socket.socket</em>) &#8211; Socket to connect over.</li>
+<li><strong>address</strong> (<em>tuple</em>) &#8211; (ip_addr, port) tuple to connect to.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><tt class="xref py py-exc docutils literal"><span class="pre">socket.error</span></tt> &#8211; If error encountered not normally found with
+asynchronous connections.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="port_scanner.probe.create_tcp_socket">
+<tt class="descclassname">port_scanner.probe.</tt><tt class="descname">create_tcp_socket</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/port_scanner/probe.html#create_tcp_socket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.probe.create_tcp_socket" title="Permalink to this definition">¶</a></dt>
+<dd><p>TCP socket factory.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="port_scanner.probe.setup_tcp_socket">
+<tt class="descclassname">port_scanner.probe.</tt><tt class="descname">setup_tcp_socket</tt><big>(</big><em>sock</em><big>)</big><a class="reference internal" href="_modules/port_scanner/probe.html#setup_tcp_socket"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.probe.setup_tcp_socket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up a TCP socket for asynchronous calls,
+and to close connections with RST instead of FIN handshakes.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="port_scanner.scanner.html" class="btn btn-neutral float-right" title="port_scanner.scanner module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="port_scanner.chunker.html" class="btn btn-neutral" title="port_scanner.chunker module" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Author.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

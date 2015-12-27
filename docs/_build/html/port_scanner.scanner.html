@@ -1,0 +1,312 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>port_scanner.scanner module &mdash; port_scanner  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="port_scanner  documentation" href="index.html"/>
+        <link rel="up" title="port_scanner package" href="port_scanner.html"/>
+        <link rel="next" title="port_scanner.values module" href="port_scanner.values.html"/>
+        <link rel="prev" title="port_scanner.probe module" href="port_scanner.probe.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="index.html" class="icon icon-home"> port_scanner
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="port_scanner.html">port_scanner package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="port_scanner.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="port_scanner.chunker.html">port_scanner.chunker module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="port_scanner.probe.html">port_scanner.probe module</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">port_scanner.scanner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="port_scanner.values.html">port_scanner.values module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="port_scanner.html#module-port_scanner">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">port_scanner</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="port_scanner.html">port_scanner package</a> &raquo;</li>
+      
+    <li>port_scanner.scanner module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <div class="section" id="module-port_scanner.scanner">
+<span id="port-scanner-scanner-module"></span><h1>port_scanner.scanner module<a class="headerlink" href="#module-port_scanner.scanner" title="Permalink to this headline">¶</a></h1>
+<p>This module provides functions and a class <tt class="docutils literal"><span class="pre">PortScanner</span></tt>
+for scanning a collection of ports on a remote host.</p>
+<dl class="exception">
+<dt id="port_scanner.scanner.InvalidHostError">
+<em class="property">exception </em><tt class="descclassname">port_scanner.scanner.</tt><tt class="descname">InvalidHostError</tt><big>(</big><em>host</em><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#InvalidHostError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.InvalidHostError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="port_scanner.scanner.PortScanner">
+<em class="property">class </em><tt class="descclassname">port_scanner.scanner.</tt><tt class="descname">PortScanner</tt><big>(</big><em>host</em>, <em>port_list</em><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#PortScanner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.PortScanner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>This class takes a remote host and a collection of ports and scans
+and scans the ports for their status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>host</strong> (<em>str</em>) &#8211; The hostname or IP address of the remote host. If a hostname
+is given and it resolves to multiple addresses, only one address is used.
+If a hostname is given that doesn&#8217;t resolve, initialization fails.</li>
+<li><strong>port_list</strong> (<em>collection</em>) &#8211; The collection of port numbers (integers) to scan.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="port_scanner.scanner.PortScanner.results_map">
+<tt class="descname">results_map</tt><a class="headerlink" href="#port_scanner.scanner.PortScanner.results_map" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> &#8211; A dictionary mapping ports to their status codes
+populated during a call to <tt class="docutils literal"><span class="pre">run()</span></tt>.</p>
+</dd></dl>
+
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><a class="reference internal" href="#port_scanner.scanner.InvalidHostError" title="port_scanner.scanner.InvalidHostError"><tt class="xref py py-exc docutils literal"><span class="pre">InvalidHostError</span></tt></a> &#8211; If hostname doesn&#8217;t resolve.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="port_scanner.scanner.PortScanner.clear">
+<tt class="descname">clear</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#PortScanner.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.PortScanner.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear the results map.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="port_scanner.scanner.PortScanner.launch_probes">
+<tt class="descname">launch_probes</tt><big>(</big><em>port_chunk</em><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#PortScanner.launch_probes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.PortScanner.launch_probes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Launch probes on a given port chunk.</p>
+<p>Return a map of underlying file descriptors to <tt class="docutils literal"><span class="pre">PortProbe``s.</span>
+<span class="pre">If</span> <span class="pre">a</span> <span class="pre">result</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">port</span> <span class="pre">is</span> <span class="pre">already</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">``results_map</span></tt>, a
+new probe is not created.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>port_chunk</strong> (<em>list</em>) &#8211; List of ports to probe at one time.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>fd_map</strong> &#8211; Map of underlying file descriptors to <a href="#id1"><span class="problematic" id="id2">``</span></a>PortProbe``s.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dictionary</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="port_scanner.scanner.PortScanner.poll">
+<tt class="descname">poll</tt><big>(</big><em>port_chunk</em>, <em>timeout</em><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#PortScanner.poll"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.PortScanner.poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>Launch probes for given port chunk, and check their
+status with <tt class="docutils literal"><span class="pre">select.select</span></tt>. Populate <tt class="docutils literal"><span class="pre">results_map</span></tt>
+with results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>port_chunk</strong> (<em>list</em>) &#8211; List of ports to poll.</li>
+<li><strong>timeout</strong> (<em>float</em>) &#8211; Amount of total time to spend in this
+method. Time is either used entirely with calls to
+<tt class="docutils literal"><span class="pre">select.select</span></tt> or used sleeping if <tt class="docutils literal"><span class="pre">select.select</span></tt>
+returns information on all ports in the chunk.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="port_scanner.scanner.PortScanner.run">
+<tt class="descname">run</tt><big>(</big><em>interval_time=0.11</em><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#PortScanner.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.PortScanner.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear the results map and start a new scan.</p>
+<p>Ports from the instance&#8217;s <tt class="docutils literal"><span class="pre">port_list</span></tt> are chunked,
+and each chunk is polled twice, the second time in reverse order.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><strong>interval_time</strong> (<em>float</em>) &#8211; The time to wait between each poll.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="port_scanner.scanner.reverse_port_chunk">
+<tt class="descclassname">port_scanner.scanner.</tt><tt class="descname">reverse_port_chunk</tt><big>(</big><em>port_chunk</em><big>)</big><a class="reference internal" href="_modules/port_scanner/scanner.html#reverse_port_chunk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#port_scanner.scanner.reverse_port_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a port_chunk(list) in reverse order.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="port_scanner.values.html" class="btn btn-neutral float-right" title="port_scanner.values module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="port_scanner.probe.html" class="btn btn-neutral" title="port_scanner.probe module" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Author.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

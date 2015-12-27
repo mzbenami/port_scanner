@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>port_scanner.scanner &mdash; port_scanner  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="port_scanner  documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../../index.html" class="icon icon-home"> port_scanner
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../port_scanner.html">port_scanner package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../port_scanner.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.chunker.html">port_scanner.chunker module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.probe.html">port_scanner.probe module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.scanner.html">port_scanner.scanner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.values.html">port_scanner.values module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../port_scanner.html#module-port_scanner">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">port_scanner</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>port_scanner.scanner</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for port_scanner.scanner</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;This module provides functions and a class ``PortScanner``</span>
+<span class="sd">for scanning a collection of ports on a remote host.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">select</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+
+<span class="kn">from</span> <span class="nn">port_scanner.values</span> <span class="kn">import</span> <span class="n">RESULT_FILTERED</span>
+<span class="kn">from</span> <span class="nn">port_scanner.probe</span> <span class="kn">import</span> <span class="n">PortProbe</span>
+<span class="kn">from</span> <span class="nn">port_scanner.chunker</span> <span class="kn">import</span> <span class="n">PortChunker</span>
+
+<span class="c"># interval at which to probe chunks of ports together</span>
+<span class="n">INTERVAL_TIME</span> <span class="o">=</span> <span class="mf">0.11</span>
+
+<div class="viewcode-block" id="InvalidHostError"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.InvalidHostError">[docs]</a><span class="k">class</span> <span class="nc">InvalidHostError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> is an invalid host or IP address&#39;</span> <span class="o">%</span> <span class="n">host</span>
+</div>
+<div class="viewcode-block" id="reverse_port_chunk"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.reverse_port_chunk">[docs]</a><span class="k">def</span> <span class="nf">reverse_port_chunk</span><span class="p">(</span><span class="n">port_chunk</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a port_chunk(list) in reverse order.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">port_chunk</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="PortScanner"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.PortScanner">[docs]</a><span class="k">class</span> <span class="nc">PortScanner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class takes a remote host and a collection of ports and scans</span>
+<span class="sd">    and scans the ports for their status.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        host(str): The hostname or IP address of the remote host. If a hostname</span>
+<span class="sd">            is given and it resolves to multiple addresses, only one address is used.</span>
+<span class="sd">            If a hostname is given that doesn&#39;t resolve, initialization fails.</span>
+<span class="sd">        port_list(collection): The collection of port numbers (integers) to scan.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        results_map(dict): A dictionary mapping ports to their status codes</span>
+<span class="sd">            populated during a call to ``run()``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        InvalidHostError: If hostname doesn&#39;t resolve.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">port_list</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">address</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">gaierror</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">InvalidHostError</span><span class="p">(</span><span class="n">host</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">port_list</span> <span class="o">=</span> <span class="n">port_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="PortScanner.launch_probes"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.PortScanner.launch_probes">[docs]</a>    <span class="k">def</span> <span class="nf">launch_probes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port_chunk</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Launch probes on a given port chunk.</span>
+
+<span class="sd">        Return a map of underlying file descriptors to ``PortProbe``s.</span>
+<span class="sd">        If a result for the port is already in the ``results_map``, a</span>
+<span class="sd">        new probe is not created.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            port_chunk(list): List of ports to probe at one time.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            fd_map(dictionary): Map of underlying file descriptors to ``PortProbe``s.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fd_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">port</span> <span class="ow">in</span> <span class="n">port_chunk</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">port</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span> \
+                    <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span><span class="p">[</span><span class="n">port</span><span class="p">]</span> <span class="o">==</span> <span class="n">RESULT_FILTERED</span><span class="p">:</span>
+                <span class="n">probe</span> <span class="o">=</span> <span class="n">PortProbe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">address</span><span class="p">,</span> <span class="n">port</span><span class="p">)</span>
+                <span class="n">fd_map</span><span class="p">[</span><span class="n">probe</span><span class="o">.</span><span class="n">file_no</span><span class="p">]</span> <span class="o">=</span> <span class="n">probe</span>
+
+        <span class="k">return</span> <span class="n">fd_map</span>
+</div>
+<div class="viewcode-block" id="PortScanner.poll"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.PortScanner.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port_chunk</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Launch probes for given port chunk, and check their</span>
+<span class="sd">        status with ``select.select``. Populate ``results_map``</span>
+<span class="sd">        with results.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            port_chunk(list): List of ports to poll.</span>
+<span class="sd">            timeout(float): Amount of total time to spend in this</span>
+<span class="sd">                method. Time is either used entirely with calls to</span>
+<span class="sd">                ``select.select`` or used sleeping if ``select.select``</span>
+<span class="sd">                returns information on all ports in the chunk.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fd_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">launch_probes</span><span class="p">(</span><span class="n">port_chunk</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="p">{};</span> <span class="n">e</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fd_map</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="k">while</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">r2</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">e2</span> <span class="o">=</span> <span class="n">select</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
+            <span class="n">timeout</span> <span class="o">-=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+
+            <span class="k">for</span> <span class="n">reaped</span> <span class="ow">in</span> <span class="n">w2</span><span class="p">:</span>
+                <span class="n">probe</span> <span class="o">=</span> <span class="n">fd_map</span><span class="p">[</span><span class="n">reaped</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span><span class="p">[</span><span class="n">probe</span><span class="o">.</span><span class="n">port</span><span class="p">]</span> <span class="o">=</span> <span class="n">probe</span><span class="o">.</span><span class="n">analyze</span><span class="p">()</span>
+
+                <span class="n">probe</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">w</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">reaped</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">unreaped</span> <span class="ow">in</span> <span class="n">w</span><span class="p">:</span>
+            <span class="n">probe</span> <span class="o">=</span> <span class="n">fd_map</span><span class="p">[</span><span class="n">unreaped</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span><span class="p">[</span><span class="n">probe</span><span class="o">.</span><span class="n">port</span><span class="p">]</span> <span class="o">=</span> <span class="n">RESULT_FILTERED</span>
+
+            <span class="n">probe</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PortScanner.run"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.PortScanner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval_time</span><span class="o">=</span><span class="n">INTERVAL_TIME</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear the results map and start a new scan.</span>
+
+<span class="sd">        Ports from the instance&#39;s ``port_list`` are chunked,</span>
+<span class="sd">        and each chunk is polled twice, the second time in reverse order.</span>
+
+<span class="sd">        Keyword Args:</span>
+<span class="sd">            interval_time(float): The time to wait between each poll.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="n">port_chunker</span> <span class="o">=</span> <span class="n">PortChunker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port_list</span><span class="p">)</span>
+        <span class="n">port_chunk</span> <span class="o">=</span> <span class="n">port_chunker</span><span class="o">.</span><span class="n">get_chunk</span><span class="p">()</span>
+        <span class="k">while</span> <span class="n">port_chunk</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">port_chunk</span><span class="p">,</span> <span class="n">interval_time</span><span class="p">)</span>
+            <span class="n">reversed_chunk</span> <span class="o">=</span> <span class="n">reverse_port_chunk</span><span class="p">(</span><span class="n">port_chunk</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="n">reversed_chunk</span><span class="p">,</span> <span class="n">interval_time</span><span class="p">)</span>
+
+            <span class="n">port_chunk</span> <span class="o">=</span> <span class="n">port_chunker</span><span class="o">.</span><span class="n">get_chunk</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span>
+</div>
+<div class="viewcode-block" id="PortScanner.clear"><a class="viewcode-back" href="../../port_scanner.scanner.html#port_scanner.scanner.PortScanner.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear the results map.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_map</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Author.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

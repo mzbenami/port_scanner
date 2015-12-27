@@ -1,0 +1,284 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>port_scanner.probe &mdash; port_scanner  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="port_scanner  documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        
+
+        
+          <a href="../../index.html" class="icon icon-home"> port_scanner
+        
+
+        
+        </a>
+
+        
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+          
+          
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../port_scanner.html">port_scanner package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../port_scanner.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.chunker.html">port_scanner.chunker module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.probe.html">port_scanner.probe module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.scanner.html">port_scanner.scanner module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../port_scanner.values.html">port_scanner.values module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../port_scanner.html#module-port_scanner">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+          
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">port_scanner</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>port_scanner.probe</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document">
+            
+  <h1>Source code for port_scanner.probe</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;This module provides functions and a class ``PortProbe`` to connect</span>
+<span class="sd">over a single TCP socket on a specified port, and determine the status of the</span>
+<span class="sd">port on the host on the otherside.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">errno</span> <span class="kn">import</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">,</span> <span class="n">EINVAL</span><span class="p">,</span> \
+     <span class="n">ENOTCONN</span><span class="p">,</span> <span class="n">EISCONN</span><span class="p">,</span> <span class="n">EBADF</span><span class="p">,</span>  \
+     <span class="n">ETIMEDOUT</span><span class="p">,</span> <span class="n">ECONNREFUSED</span><span class="p">,</span> <span class="n">errorcode</span>
+
+<span class="kn">from</span> <span class="nn">port_scanner.values</span> <span class="kn">import</span> <span class="n">RESULT_CLOSED</span><span class="p">,</span> <span class="n">RESULT_FILTERED</span><span class="p">,</span> <span class="n">RESULT_OPEN</span><span class="p">,</span> <span class="n">RESULT_UNKNOWN</span>
+
+
+<div class="viewcode-block" id="connect"><a class="viewcode-back" href="../../port_scanner.probe.html#port_scanner.probe.connect">[docs]</a><span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">address</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Asynchronously connect over a provided TCP socket.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sock(socket.socket): Socket to connect over.</span>
+<span class="sd">        address(tuple): (ip_addr, port) tuple to connect to.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        socket.error: If error encountered not normally found with</span>
+<span class="sd">            asynchronous connections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># adapted from asyncore.py</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">connect_ex</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">err</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">EISCONN</span><span class="p">,</span> <span class="n">EINPROGRESS</span><span class="p">,</span> <span class="n">EALREADY</span><span class="p">,</span> <span class="n">EWOULDBLOCK</span><span class="p">)</span> \
+            <span class="ow">or</span> <span class="n">err</span> <span class="o">==</span> <span class="n">EINVAL</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;nt&#39;</span><span class="p">,</span> <span class="s">&#39;ce&#39;</span><span class="p">):</span>
+        <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">errorcode</span><span class="p">[</span><span class="n">err</span><span class="p">])</span>
+
+</div>
+<div class="viewcode-block" id="create_tcp_socket"><a class="viewcode-back" href="../../port_scanner.probe.html#port_scanner.probe.create_tcp_socket">[docs]</a><span class="k">def</span> <span class="nf">create_tcp_socket</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;TCP socket factory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="setup_tcp_socket"><a class="viewcode-back" href="../../port_scanner.probe.html#port_scanner.probe.setup_tcp_socket">[docs]</a><span class="k">def</span> <span class="nf">setup_tcp_socket</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set up a TCP socket for asynchronous calls,</span>
+<span class="sd">    and to close connections with RST instead of FIN handshakes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c"># send RST on close() instead of FIN handshake</span>
+    <span class="n">sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_LINGER</span><span class="p">,</span>
+                    <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s">&#39;ii&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="PortProbe"><a class="viewcode-back" href="../../port_scanner.probe.html#port_scanner.probe.PortProbe">[docs]</a><span class="k">class</span> <span class="nc">PortProbe</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;This class connects over a socket on initialization,</span>
+<span class="sd">    and provides an ``analyze()`` method to determine the status of</span>
+<span class="sd">    the port on the other side.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ip_addr(str): IP address of host to connect to. If a hostname is given</span>
+<span class="sd">            instead of an IP address, behavior is undefined.</span>
+<span class="sd">        port(int): Port to connect to.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        file_no(int): The file descriptor of the associated socket.</span>
+<span class="sd">        port(int): The remote port of the associated socket.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip_addr</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socket</span> <span class="o">=</span> <span class="n">create_tcp_socket</span><span class="p">()</span>
+        <span class="n">setup_tcp_socket</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="p">)</span>
+        <span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="p">,</span> <span class="p">(</span><span class="n">ip_addr</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_no</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">fileno</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">RESULT_UNKNOWN</span>
+
+<div class="viewcode-block" id="PortProbe.close"><a class="viewcode-back" href="../../port_scanner.probe.html#port_scanner.probe.PortProbe.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="PortProbe.analyze"><a class="viewcode-back" href="../../port_scanner.probe.html#port_scanner.probe.PortProbe.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">RESULT_UNKNOWN</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+
+        <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">getsockopt</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_ERROR</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">getpeername</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">se</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">se</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">ENOTCONN</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">RESULT_UNKNOWN</span>
+                <span class="k">elif</span> <span class="n">se</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">EINVAL</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">RESULT_OPEN</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">se</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">RESULT_OPEN</span>
+
+        <span class="k">elif</span> <span class="n">err</span> <span class="o">==</span> <span class="n">ETIMEDOUT</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">RESULT_FILTERED</span>
+
+        <span class="k">elif</span> <span class="n">err</span> <span class="o">==</span> <span class="n">ECONNREFUSED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">RESULT_CLOSED</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Author.
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
