@@ -19,7 +19,7 @@ def syntax_error_msg(section):
 
 def port_list_from_string(port_string):
     """Convert a comma- and hyphen-separated string of integers
-        to a list of unique integers.
+    to a list of unique integers. Exit on syntax errors.
     """
     port_list = []
     comma_separated = port_string.split(',')
@@ -58,13 +58,17 @@ def handle_args():
                         default='1-65535',
                         help='The hyphen- and/or comma-separated port list to scan.\n' +
                              'e.g. \'1,2-8,9,10-20\'\n' +
-                             'Defaults to ports 1-65535.')
+                             'Defaults to ports 1-65535.\n' +
+                             'Ports outside this range will be ignored.')
+    parser.add_argument('--show-closed', '-c',
+                        dest='show_closed', action='store_true',
+                        help='If present, closed ports are displayed.')
 
     args = parser.parse_args()
     return args
 
 
-def print_results(host, results_map, dont_detail=[RESULT_FILTERED]):
+def print_results(host, results_map, show_closed=False):
     """Print scan results to stdout.""
     Args:
         host(str): The host that was scanned.
@@ -72,40 +76,44 @@ def print_results(host, results_map, dont_detail=[RESULT_FILTERED]):
             as found in a port_scanner.scanner.PortScanner object after a scan.
 
     Keyword Args:
-        dont_detail(list): List of RESULT types (integers)
-            to not print out in detail.
+        show_closed(bool): Whether to show the closed ports.
     """
-    counts = {
-        RESULT_OPEN: 0,
-        RESULT_FILTERED: 0,
-        RESULT_CLOSED: 0,
-        RESULT_UNKNOWN: 0
+    class ResultWorker(object):
+        def __init__(self, word, count):
+            self.word = word
+            self.count = count
+
+    result_dict = {
+        RESULT_OPEN: ResultWorker('open', 0),
+        RESULT_FILTERED: ResultWorker('filtered', 0),
+        RESULT_CLOSED: ResultWorker('closed', 0),
+        RESULT_UNKNOWN: ResultWorker('unknown', 0)
     }
 
-    words = {
-        RESULT_OPEN: 'open',
-        RESULT_FILTERED: 'filtered',
-        RESULT_CLOSED: 'closed',
-        RESULT_UNKNOWN: 'unknown'
-    }
+    dont_detail = [RESULT_FILTERED]
+    if not show_closed:
+        dont_detail.append(RESULT_CLOSED)
 
     results_str_list = []
     for port in results_map:
         result = results_map[port]
-        counts[result] += 1
+        result_dict[result].count += 1
         if result not in dont_detail:
-            results_str_list.append('%s\t\t%s' % (port, words[result]))
+            results_str_list.append('%s\t\t%s' % (port, result_dict[result].word))
 
     print "RESULTS"
     print "======="
     print '%s seems to have %d open, %d closed, %d filtered, and %d unknown ports.' \
-        % (host, counts[RESULT_OPEN],
-           counts[RESULT_CLOSED],
-           counts[RESULT_FILTERED],
-           counts[RESULT_UNKNOWN])
-    print
-    print 'PORT\t\tSTATUS'
-    print '\n'.join(results_str_list)
+        % (host,
+           result_dict[RESULT_OPEN].count,
+           result_dict[RESULT_CLOSED].count,
+           result_dict[RESULT_FILTERED].count,
+           result_dict[RESULT_UNKNOWN].count)
+
+    if results_str_list:
+        print
+        print 'PORT\t\tSTATUS'
+        print '\n'.join(results_str_list)
 
 
 def main():
@@ -113,6 +121,7 @@ def main():
     args = handle_args()
     host = args.host
     port_list = port_list_from_string(args.ports)
+    show_closed = args.show_closed
 
     print 'Staring port scan of host %s.\n' % host
 
@@ -121,7 +130,7 @@ def main():
     ps.run()
 
     # print results
-    print_results(host, ps.results_map)
+    print_results(host, ps.results_map, show_closed=show_closed)
 
 if __name__ == "__main__":
     main()

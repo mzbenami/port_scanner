@@ -12,9 +12,11 @@ from port_scanner.chunker import PortChunker
 # interval at which to probe chunks of ports together
 INTERVAL_TIME = 0.11
 
+
 class InvalidHostError(Exception):
     def __init__(self, host):
         self.message = '%s is an invalid host or IP address' % host
+
 
 def reverse_port_chunk(port_chunk):
     """Return a port_chunk(list) in reverse order.
@@ -108,7 +110,6 @@ class PortScanner(object):
 
         if timeout > 0:
             time.sleep(timeout)
-
 
     def run(self, interval_time=INTERVAL_TIME):
         """Clear the results map and start a new scan.

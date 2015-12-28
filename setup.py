@@ -1,11 +1,8 @@
 from setuptools import find_packages, setup
+import port_scanner
 
 setup(name='port_scanner',
       version='0.0.1',
-      packages=find_packages(),
-      entry_points={
-        'console_scripts': [
-            'portscanner=portscanner:main'
-        ]
-      },
+      packages=['port_scanner'],
+      scripts=['portscanner']
 )
